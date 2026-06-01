@@ -5,22 +5,191 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CASOLAB</title>
     <style>
+        /* 基础重置与极简排版 */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
         body {
-            background-color: #000;
-            color: #fff;
-            font-family: sans-serif;
+            background-color: #ffffff;
+            color: #000000;
+            font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            -webkit-tap-highlight-color: transparent; /* 去除手机端点击高亮 */
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 600;
+            letter-spacing: 12px;
+            margin-right: -12px; 
+            text-transform: uppercase;
+            margin-bottom: 60px;
+        }
+
+        /* 唱机交互区容器 */
+        .turntable {
+            position: relative;
+            width: 260px;
+            height: 260px;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            margin: 0;
+            cursor: pointer;
+        }
+
+        /* 黑胶唱片本体 */
+        .record {
+            width: 240px;
+            height: 240px;
+            background-color: #111111; /* 极深的灰黑，比纯黑更有质感 */
+            border-radius: 50%;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08); /* 边缘柔和的阴影制造悬浮感 */
+            transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* 唱片上的物理纹路感 */
+        .record::before, .record::after {
+            content: '';
+            position: absolute;
+            border: 1px solid #222222;
+            border-radius: 50%;
+        }
+        .record::before { width: 220px; height: 220px; }
+        .record::after { width: 190px; height: 190px; }
+
+        /* 唱片中心贴纸 */
+        .label {
+            width: 80px;
+            height: 80px;
+            background-color: #f7f7f7;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: #000000;
+            z-index: 2;
+            position: relative;
+        }
+
+        /* 唱片中心孔洞（穿透显示背景色） */
+        .hole {
+            width: 12px;
+            height: 12px;
+            background-color: #ffffff;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border: 2px solid #000000;
+        }
+
+        /* 极简唱针 */
+        .tonearm {
+            position: absolute;
+            top: -10px;
+            right: 10px;
+            width: 6px;
+            height: 130px;
+            background-color: #e0e0e0;
+            transform-origin: top center;
+            transform: rotate(-35deg); /* 初始状态：离开唱片 */
+            transition: transform 0.6s cubic-bezier(0.65, 0, 0.35, 1); /* 苹果式缓动曲线 */
+            border-radius: 4px;
+            z-index: 10;
+        }
+
+        /* 唱针头部 */
+        .tonearm::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: -4px;
+            width: 14px;
+            height: 24px;
+            background-color: #999999;
+            border-radius: 2px;
+        }
+
+        /* 旋转动画定义 */
+        @keyframes spin {
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 播放状态下的控制类 */
+        .playing .record {
+            animation: spin 2s linear infinite; /* 匀速持续旋转 */
+        }
+        .playing .tonearm {
+            transform: rotate(12deg); /* 唱针搭在唱片上 */
+        }
+
+        /* 底部操作提示 */
+        .hint {
+            margin-top: 50px;
+            font-size: 11px;
+            font-weight: 500;
+            color: #888888;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            transition: opacity 0.3s;
+        }
+        .playing ~ .hint {
+            opacity: 0; /* 播放时隐藏提示，保持绝对极简 */
         }
     </style>
 </head>
 <body>
-    <div style="text-align: center;">
-        <h1 style="font-size: 3rem; letter-spacing: 0.5rem;">CASOLAB</h1>
-        <p style="color: #888; font-size: 1.2rem;">Music Producer & Artist</p>
+
+    <h1>CASOLAB</h1>
+
+    <!-- 唱机容器 -->
+    <div class="turntable" id="turntable">
+        <div class="tonearm"></div>
+        <div class="record" id="record">
+            <div class="label">
+                UNSTABLE
+                <div class="hole"></div>
+            </div>
+        </div>
     </div>
+
+    <div class="hint">TAP TO PLAY</div>
+
+    <!-- 音频载体，替换 src 为你的真实音频链接 -->
+    <audio id="demo-audio" src="demo.mp3" preload="auto"></audio>
+
+    <script>
+        const turntable = document.getElementById('turntable');
+        const audio = document.getElementById('demo-audio');
+
+        turntable.addEventListener('click', () => {
+            // 判断当前音频是否处于暂停状态
+            if (audio.paused) {
+                audio.play();
+                turntable.classList.add('playing'); // 触发CSS唱针摆动和旋转动画
+            } else {
+                audio.pause();
+                turntable.classList.remove('playing'); // 停止动画，唱针复位
+            }
+        });
+
+        // 监听音频播放结束事件，自动复位状态
+        audio.addEventListener('ended', () => {
+            turntable.classList.remove('playing');
+        });
+    </script>
+
 </body>
 </html>
