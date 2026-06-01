@@ -5,191 +5,338 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CASOLAB</title>
     <style>
-        /* 基础重置与极简排版 */
+        :root {
+            --bg-color: #FFFFFF;
+            --text-color: #000000;
+            --gray-mid: #D9D9D9;
+        }
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        
+
         body {
-            background-color: #ffffff;
-            color: #000000;
-            font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+
+        .gallery-container {
+            display: flex;
+            min-height: 100vh;
+            width: 100vw;
+        }
+
+        /* ====== 左侧：控制枢纽 ====== */
+        .left-panel {
+            width: 50vw;
             height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 60px;
+            background: var(--bg-color);
+        }
+
+        .brand-logo {
+            font-size: 32px;
+            font-weight: 900;
+            letter-spacing: -3px; 
+            text-transform: uppercase;
+            transform: scaleY(0.85); 
+            transform-origin: left top;
+        }
+
+        /* 核心装置 */
+        .signal-core {
+            align-self: center;
+            margin-top: -15vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 40px;
+        }
+
+        /* 默认纯黑圆球 */
+        .void-sphere {
+            width: 240px; /* 稍微放大一点，镇住 9 宫格 */
+            height: 240px;
+            background-color: #000000;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            border-radius: 50%;
+            position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1); 
+            transition: filter 0.4s ease;
+        }
+
+        @keyframes endless-spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .is-receiving .void-sphere {
+            animation: endless-spin 4s linear infinite; 
+        }
+        
+        .is-paused .void-sphere {
+            filter: grayscale(50%) brightness(0.7);
+        }
+
+        .sys-status {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 11px;
+            letter-spacing: 2px;
+            font-weight: bold;
+            color: #000;
+            text-transform: uppercase;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            background-color: #000;
+            border-radius: 50%;
+            transition: opacity 0.3s;
+        }
+
+        .is-receiving .status-dot {
+            animation: blink 1s infinite alternate;
+        }
+
+        @keyframes blink {
+            0% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        /* ====== 右侧：3x3 完美矩阵 ====== */
+        .right-panel {
+            width: 50vw;
+            margin-left: 50vw;
+            min-height: 100vh;
+            padding: 60px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr); /* 从 2 栏改为 3 栏 */
+            gap: 20px; /* 缩小间距，让 9 个方块更紧凑 */
+            align-content: center; /* 整体居中 */
+        }
+
+        .track-item {
+            aspect-ratio: 1 / 1;
+            background-color: var(--gray-mid);
+            position: relative;
+            cursor: pointer;
+            overflow: hidden;
+            transition: background-color 0.4s ease;
+        }
+
+        /* 统一的噪点滤镜，没放图片前像水泥灰，放了图片后覆盖在图片上增加胶片质感 */
+        .track-item::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.08'/%3E%3C/svg%3E");
+            mix-blend-mode: multiply;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            z-index: 2;
+        }
+
+        .track-item:hover { background-color: #000; }
+        .track-item:hover::before { opacity: 1; }
+
+        .track-info {
+            position: absolute;
+            inset: 0;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            overflow: hidden;
-            -webkit-tap-highlight-color: transparent; /* 去除手机端点击高亮 */
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            z-index: 3;
+            background-color: rgba(0,0,0,0.4); /* 悬停时压暗背景，让白色字更清晰 */
         }
 
-        h1 {
-            font-size: 24px;
-            font-weight: 600;
-            letter-spacing: 12px;
-            margin-right: -12px; 
-            text-transform: uppercase;
-            margin-bottom: 60px;
-        }
+        .track-item:hover .track-info { opacity: 1; }
 
-        /* 唱机交互区容器 */
-        .turntable {
-            position: relative;
-            width: 260px;
-            height: 260px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-        }
-
-        /* 黑胶唱片本体 */
-        .record {
-            width: 240px;
-            height: 240px;
-            background-color: #111111; /* 极深的灰黑，比纯黑更有质感 */
-            border-radius: 50%;
-            position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08); /* 边缘柔和的阴影制造悬浮感 */
-            transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        /* 唱片上的物理纹路感 */
-        .record::before, .record::after {
-            content: '';
-            position: absolute;
-            border: 1px solid #222222;
-            border-radius: 50%;
-        }
-        .record::before { width: 220px; height: 220px; }
-        .record::after { width: 190px; height: 190px; }
-
-        /* 唱片中心贴纸 */
-        .label {
-            width: 80px;
-            height: 80px;
-            background-color: #f7f7f7;
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 9px;
+        .track-title {
+            font-size: 11px; /* 3栏比较紧凑，字号微调保证长歌名不换行 */
             font-weight: 700;
             letter-spacing: 2px;
-            color: #000000;
-            z-index: 2;
-            position: relative;
-        }
-
-        /* 唱片中心孔洞（穿透显示背景色） */
-        .hole {
-            width: 12px;
-            height: 12px;
-            background-color: #ffffff;
-            border-radius: 50%;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            border: 2px solid #000000;
-        }
-
-        /* 极简唱针 */
-        .tonearm {
-            position: absolute;
-            top: -10px;
-            right: 10px;
-            width: 6px;
-            height: 130px;
-            background-color: #e0e0e0;
-            transform-origin: top center;
-            transform: rotate(-35deg); /* 初始状态：离开唱片 */
-            transition: transform 0.6s cubic-bezier(0.65, 0, 0.35, 1); /* 苹果式缓动曲线 */
-            border-radius: 4px;
-            z-index: 10;
-        }
-
-        /* 唱针头部 */
-        .tonearm::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: -4px;
-            width: 14px;
-            height: 24px;
-            background-color: #999999;
-            border-radius: 2px;
-        }
-
-        /* 旋转动画定义 */
-        @keyframes spin {
-            100% { transform: rotate(360deg); }
-        }
-
-        /* 播放状态下的控制类 */
-        .playing .record {
-            animation: spin 2s linear infinite; /* 匀速持续旋转 */
-        }
-        .playing .tonearm {
-            transform: rotate(12deg); /* 唱针搭在唱片上 */
-        }
-
-        /* 底部操作提示 */
-        .hint {
-            margin-top: 50px;
-            font-size: 11px;
-            font-weight: 500;
-            color: #888888;
-            letter-spacing: 3px;
+            color: #FFFFFF;
             text-transform: uppercase;
-            transition: opacity 0.3s;
+            text-align: center;
+            padding: 0 10px;
         }
-        .playing ~ .hint {
-            opacity: 0; /* 播放时隐藏提示，保持绝对极简 */
+
+        /* 移动端适配 */
+        @media (max-width: 900px) {
+            .gallery-container { flex-direction: column; }
+            .left-panel {
+                width: 100vw;
+                height: 100vw;
+                position: relative;
+                padding: 30px;
+            }
+            .brand-logo { top: 30px; left: 30px; position: absolute; }
+            .signal-core { margin-top: 0; transform: scale(0.85); }
+            .right-panel { 
+                width: 100vw; 
+                margin-left: 0; 
+                padding: 30px; 
+                gap: 15px; 
+                grid-template-columns: repeat(3, 1fr); /* 手机端依然保持 3 栏网格 */
+            }
+            .track-title { font-size: 9px; letter-spacing: 1px; }
         }
     </style>
 </head>
 <body>
 
-    <h1>CASOLAB</h1>
+    <div class="gallery-container">
+        
+        <!-- 左侧 -->
+        <div class="left-panel">
+            <div class="brand-logo">CASOLAB</div>
+            
+            <div class="signal-core" id="player-container">
+                <div class="void-sphere" id="cover-sphere"></div>
+                <div class="sys-status">
+                    <div class="status-dot"></div>
+                    <span id="status-text">SYSTEM_STANDBY</span>
+                </div>
+            </div>
+        </div>
 
-    <!-- 唱机容器 -->
-    <div class="turntable" id="turntable">
-        <div class="tonearm"></div>
-        <div class="record" id="record">
-            <div class="label">
-                UNSTABLE
-                <div class="hole"></div>
+        <!-- 右侧：9 宫格矩阵 -->
+        <div class="right-panel">
+            <!-- 01 -->
+            <div class="track-item" data-src="demo_01.mp3" data-cover="cover_01.jpg" data-title="WHAT'S YR SIGN">
+                <div class="track-info">
+                    <div class="track-title">WHAT'S YR SIGN</div>
+                </div>
+            </div>
+            <!-- 02 -->
+            <div class="track-item" data-src="demo_02.mp3" data-cover="cover_02.jpg" data-title="DEMO.1">
+                <div class="track-info">
+                    <div class="track-title">DEMO.1</div>
+                </div>
+            </div>
+            <!-- 03 -->
+            <div class="track-item" data-src="demo_03.mp3" data-cover="cover_03.jpg" data-title="HARD BRASS+">
+                <div class="track-info">
+                    <div class="track-title">HARD BRASS+</div>
+                </div>
+            </div>
+            <!-- 04 -->
+            <div class="track-item" data-src="demo_04.mp3" data-cover="cover_04.jpg" data-title="ANYTHING U WANT">
+                <div class="track-info">
+                    <div class="track-title">ANYTHING U WANT</div>
+                </div>
+            </div>
+            <!-- 05 -->
+            <div class="track-item" data-src="demo_05.mp3" data-cover="cover_05.jpg" data-title="MIXDOWN2">
+                <div class="track-info">
+                    <div class="track-title">MIXDOWN2</div>
+                </div>
+            </div>
+            <!-- 06 -->
+            <div class="track-item" data-src="demo_06.mp3" data-cover="cover_06.jpg" data-title="ALL TO ME">
+                <div class="track-info">
+                    <div class="track-title">ALL TO ME</div>
+                </div>
+            </div>
+            <!-- 07 -->
+            <div class="track-item" data-src="demo_07.mp3" data-cover="cover_07.jpg" data-title="SPECIAL NIGHT">
+                <div class="track-info">
+                    <div class="track-title">SPECIAL NIGHT</div>
+                </div>
+            </div>
+            <!-- 08 -->
+            <div class="track-item" data-src="demo_08.mp3" data-cover="cover_08.jpg" data-title="END">
+                <div class="track-info">
+                    <div class="track-title">END</div>
+                </div>
+            </div>
+            <!-- 09 -->
+            <div class="track-item" data-src="demo_09.mp3" data-cover="cover_09.jpg" data-title="NEVERLIE">
+                <div class="track-info">
+                    <div class="track-title">NEVERLIE</div>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="hint">TAP TO PLAY</div>
-
-    <!-- 音频载体，替换 src 为你的真实音频链接 -->
-    <audio id="demo-audio" src="demo.mp3" preload="auto"></audio>
+    <!-- 音频引擎 -->
+    <audio id="audio-engine" preload="auto"></audio>
 
     <script>
-        const turntable = document.getElementById('turntable');
-        const audio = document.getElementById('demo-audio');
+        const playerContainer = document.getElementById('player-container');
+        const coverSphere = document.getElementById('cover-sphere');
+        const audioEngine = document.getElementById('audio-engine');
+        const statusText = document.getElementById('status-text');
+        const trackItems = document.querySelectorAll('.track-item');
 
-        turntable.addEventListener('click', () => {
-            // 判断当前音频是否处于暂停状态
-            if (audio.paused) {
-                audio.play();
-                turntable.classList.add('playing'); // 触发CSS唱针摆动和旋转动画
-            } else {
-                audio.pause();
-                turntable.classList.remove('playing'); // 停止动画，唱针复位
-            }
+        let currentTrackTitle = null;
+
+        trackItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const trackSrc = item.getAttribute('data-src');
+                const trackTitle = item.getAttribute('data-title');
+                const trackCover = item.getAttribute('data-cover'); 
+
+                if (currentTrackTitle === trackTitle && !audioEngine.paused) {
+                    abortTransmission();
+                    return;
+                }
+
+                initiateTransmission(trackSrc, trackTitle, trackCover);
+            });
         });
 
-        // 监听音频播放结束事件，自动复位状态
-        audio.addEventListener('ended', () => {
-            turntable.classList.remove('playing');
+        function initiateTransmission(src, title, coverUrl) {
+            playerContainer.classList.remove('is-paused');
+            statusText.innerText = "LOADING...";
+            
+            if (currentTrackTitle !== title) {
+                audioEngine.src = src;
+                currentTrackTitle = title;
+                coverSphere.style.backgroundImage = `url('${coverUrl}')`;
+            }
+            
+            audioEngine.play().then(() => {
+                playerContainer.classList.add('is-receiving');
+                statusText.innerText = title + " [PLAYING]";
+            }).catch(e => {
+                playerContainer.classList.add('is-receiving');
+                statusText.innerText = title + " [PLAYING]";
+            });
+        }
+
+        function abortTransmission() {
+            audioEngine.pause();
+            playerContainer.classList.remove('is-receiving');
+            playerContainer.classList.add('is-paused'); 
+            statusText.innerText = currentTrackTitle + " [PAUSED]";
+        }
+
+        audioEngine.addEventListener('ended', () => {
+            playerContainer.classList.remove('is-receiving');
+            playerContainer.classList.remove('is-paused');
+            coverSphere.style.backgroundImage = 'none'; 
+            statusText.innerText = "SYSTEM_STANDBY";
+            currentTrackTitle = null;
         });
     </script>
-
 </body>
 </html>
