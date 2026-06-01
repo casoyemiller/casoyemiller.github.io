@@ -133,7 +133,7 @@
         /* 封面容器基础设定 */
         .track-item {
             aspect-ratio: 1 / 1;
-            background-color: #0A0A0A; /* 改为深渊黑，没有图片时默认呈现 */
+            background-color: #0A0A0A;
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
@@ -142,19 +142,19 @@
             overflow: hidden;
         }
 
-        /* 永久覆盖的胶片噪点滤镜，黑色底也能透出电视雪花感 */
+        /* 永久覆盖的胶片噪点滤镜 */
         .track-item::before {
             content: "";
             position: absolute;
             inset: 0;
             background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.25'/%3E%3C/svg%3E");
-            mix-blend-mode: screen; /* 关键改动：让噪点在黑底上发光 */
+            mix-blend-mode: screen;
             opacity: 1; 
             z-index: 2;
             pointer-events: none; 
         }
 
-        /* 悬停时的半透明黑纱层，用来凸显文字 */
+        /* 悬停时的半透明黑纱层 */
         .track-info {
             position: absolute;
             inset: 0;
@@ -180,7 +180,7 @@
             padding: 0 10px;
         }
 
-        /* 移动端适配 (修改后的部分) */
+        /* 移动端适配 */
         @media (max-width: 900px) {
             .gallery-container { flex-direction: column; }
             
@@ -237,27 +237,27 @@
         </div>
 
         <div class="right-panel">
-            <div class="track-item" data-src="demo_01.mp3" data-cover="cover_01.jpg" data-title="WHAT'S YR SIGN">
+            <div class="track-item" data-src="demo_01.mp3" data-cover="cover_01.jpg" data-title="DEMO_1">
                 <div class="track-info">
-                    <div class="track-title">WHAT'S YR SIGN</div>
+                    <div class="track-title">DEMO_1</div>
                 </div>
             </div>
             
-            <div class="track-item" data-src="demo_02.mp3" data-cover="cover_02.jpg" data-title="DEMO.1">
+            <div class="track-item" data-src="demo_02.mp3" data-cover="cover_02.jpg" data-title="DEMO_2">
                 <div class="track-info">
-                    <div class="track-title">demo_2</div>
+                    <div class="track-title">DEMO_2</div>
                 </div>
             </div>
             
-            <div class="track-item" data-src="demo_03.mp3" data-cover="cover_03.jpg" data-title="HARD BRASS+">
+            <div class="track-item" data-src="demo_03.mp3" data-cover="cover_03.jpg" data-title="DEMO_3">
                 <div class="track-info">
-                    <div class="track-title">HARD BRASS+</div>
+                    <div class="track-title">DEMO_3</div>
                 </div>
             </div>
             
-            <div class="track-item" data-src="demo_04.mp3" data-cover="cover_04.jpg" data-title="ANYTHING U WANT">
+            <div class="track-item" data-src="demo_04.mp3" data-cover="cover_04.jpg" data-title="DEMO_4">
                 <div class="track-info">
-                    <div class="track-title">demo_4</div>
+                    <div class="track-title">DEMO_4</div>
                 </div>
             </div>
             
@@ -267,25 +267,25 @@
                 </div>
             </div>
             
-            <div class="track-item" data-src="demo_06.mp3" data-cover="cover_06.jpg" data-title="ALL TO ME">
+            <div class="track-item" data-src="demo_06.mp3" data-cover="cover_06.jpg" data-title="DEMO_6">
                 <div class="track-info">
-                    <div class="track-title">demo_6</div>
+                    <div class="track-title">DEMO_6</div>
                 </div>
             </div>
             
-            <div class="track-item" data-src="demo_07.mp3" data-cover="cover_07.jpg" data-title="SPECIAL NIGHT">
+            <div class="track-item" data-src="demo_07.mp3" data-cover="cover_07.jpg" data-title="DEMO_7">
                 <div class="track-info">
-                    <div class="track-title">demo_7</div>
+                    <div class="track-title">DEMO_7</div>
                 </div>
             </div>
             
-            <div class="track-item" data-src="demo_08.mp3" data-cover="cover_08.jpg" data-title="END">
+            <div class="track-item" data-src="demo_08.mp3" data-cover="cover_08.jpg" data-title="NEVER LIE">
                 <div class="track-info">
                     <div class="track-title">NEVER LIE</div>
                 </div>
             </div>
             
-            <div class="track-item" data-src="demo_09.mp3" data-cover="cover_09.jpg" data-title="NEVERLIE">
+            <div class="track-item" data-src="demo_09.mp3" data-cover="cover_09.jpg" data-title="SO REAL">
                 <div class="track-info">
                     <div class="track-title">SO REAL</div>
                 </div>
@@ -309,7 +309,6 @@
             const trackTitle = item.getAttribute('data-title');
             const trackCover = item.getAttribute('data-cover'); 
 
-            // 无论你有没有上传图片，代码都会尝试去贴。如果没有，就会露出带有噪点的黑色底座。
             item.style.backgroundImage = `url('${trackCover}')`;
 
             item.addEventListener('click', () => {
