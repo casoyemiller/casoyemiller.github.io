@@ -1,94 +1,93 @@
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+/* 基础环境：无尽的黑暗 */
+* { margin: 0; padding: 0; box-sizing: border-box; }
 body {
-    background-color: #05000a;
+    background-color: #040008; /* 极暗的深紫黑底色 */
     overflow: hidden;
     width: 100vw;
     height: 100vh;
     font-family: monospace;
 }
 
-/* 紫色背景云 */
-.cosmic-bg {
+/* 1. 星云雾气 (Nebula) - 梦幻的紫色渐变，模拟图中的天空 */
+.cosmic-sky {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;
+}
+.nebula-clouds {
+    width: 100%; height: 100%;
+    /* 用多重径向渐变叠加，加上高斯模糊，做出天空被染成粉紫色的层次感 */
+    background: 
+        radial-gradient(ellipse at 50% 20%, rgba(188, 56, 211, 0.4) 0%, transparent 60%),
+        radial-gradient(ellipse at 20% 40%, rgba(98, 20, 161, 0.3) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 10%, rgba(219, 74, 183, 0.2) 0%, transparent 50%);
+    filter: blur(50px);
+    opacity: 0.85;
+}
+
+/* 2. 舞台容器：极度夸张的比例，沉到屏幕底部的穹顶 */
+.stage-container {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 1;
-    background: radial-gradient(circle at 50% 50%, #2c0052 0%, #0d001a 60%, #05000a 100%);
-    opacity: 0.8;
-}
-
-/* 动态烟雾 */
-.smoke-layer {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 2;
-    background: radial-gradient(transparent, rgba(255, 255, 255, 0.03));
-    mix-blend-mode: screen;
-    animation: smokeDrift 20s infinite alternate linear;
-}
-
-@keyframes smokeDrift {
-    0% { transform: scale(1) translate(0, 0) rotate(0deg); opacity: 0.4; }
-    50% { opacity: 0.7; }
-    100% { transform: scale(1.1) translate(-2%, 2%) rotate(3deg); opacity: 0.4; }
-}
-
-/* 球体定位 */
-.stage-center {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 3;
-}
-
-/* 巨型球体 */
-.planet-sphere {
-    width: 45vw;
-    height: 45vw;
-    max-width: 500px;
-    max-height: 500px;
-    border-radius: 50%;
-    background-color: #111;
-    box-shadow: 
-        inset -20px -20px 50px rgba(0, 0, 0, 0.9),
-        inset 30px 30px 60px rgba(162, 0, 255, 0.3), 
-        0 0 40px rgba(138, 43, 226, 0.2);
-    transition: all 0.8s ease;
-    cursor: pointer;
-}
-
-.planet-sphere:hover {
-    box-shadow: 
-        inset -10px -10px 40px rgba(0, 0, 0, 0.9),
-        inset 20px 20px 80px rgba(162, 0, 255, 0.6), 
-        0 0 60px rgba(162, 0, 255, 0.4);
-    transform: scale(1.02);
-}
-
-/* 边缘 UI 文字 */
-.ui-text {
-    position: absolute;
-    color: rgba(255, 255, 255, 0.5);
-    font-size: 11px;
-    letter-spacing: 0.4em;
-    z-index: 4;
-}
-.top-left {
-    top: 40px;
-    left: 40px;
-}
-.bottom-center {
-    bottom: 40px;
+    bottom: -60vw; /* 故意让球体沉下去一半，形成一个巨大的穹顶 */
     left: 50%;
     transform: translateX(-50%);
+    width: 150vw; /* 球体宽度远远超出屏幕，营造压迫感 */
+    height: 150vw;
+    max-width: 1800px;
+    max-height: 1800px;
+    z-index: 2;
+    display: flex;
+    justify-content: center;
 }
+
+/* 3. 暗淡星体 (The Planet) - 呼应图中的装置 */
+.massive-planet {
+    width: 100%; height: 100%;
+    border-radius: 50%;
+    /* 球体基础光影：顶部微紫反光，底部死黑 */
+    background: radial-gradient(circle at 50% 5%, #231633 0%, #06020a 35%, #000 70%);
+    box-shadow: 
+        inset 0 10px 80px rgba(185, 78, 255, 0.2), /* 顶部的光雾 */
+        0 -10px 100px rgba(0, 0, 0, 0.8);
+    position: relative;
+    overflow: hidden;
+}
+
+/* 调用 HTML 里的 SVG 滤镜，让光滑的球体表面瞬间充满沟壑和斑驳的粗糙纹理 */
+.planet-texture {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: #fff;
+    filter: url(#terrain-noise);
+    mix-blend-mode: overlay;
+    opacity: 0.15; /* 若隐若现的投影感 */
+}
+
+/* 4. 孤独的剪影 (The Figure) - 视觉核心，极其微小 */
+.lonely-figure {
+    position: absolute;
+    top: -12px; /* 站在巨物顶端 */
+    width: 4px; /* 极小，衬托宇宙的宏大 */
+    height: 14px;
+    background: #000;
+    border-radius: 2px 2px 0 0;
+    z-index: 10;
+    /* 人物背后的微弱光晕，强化焦点 */
+    box-shadow: 0 0 15px 5px rgba(198, 93, 255, 0.3);
+}
+
+/* 5. 观众席空洞 (Audience Void) - 底部纯黑渐变，吃掉下半部分的光线 */
+.audience-void {
+    position: absolute;
+    bottom: 0; left: 0; width: 100%; height: 25vh;
+    background: linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%);
+    z-index: 5;
+}
+
+/* 冷酷的 UI */
+.ui-text {
+    position: absolute;
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 10px;
+    letter-spacing: 0.5em;
+    z-index: 10;
+}
+.top-left { top: 40px; left: 40px; }
+.bottom-center { bottom: 40px; left: 50%; transform: translateX(-50%); }
