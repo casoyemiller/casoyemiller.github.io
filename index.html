@@ -4,38 +4,107 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CASOLAB</title>
-    <link rel="stylesheet" href="style.css">
+    <style>
+        /* 抹除所有网页痕迹，将浏览器变成纯粹的画布 */
+        body { margin: 0; overflow: hidden; background-color: #000; }
+        canvas { display: block; }
+        
+        /* 依然保留冷酷的工业化 UI */
+        .ui-text {
+            position: absolute; color: rgba(255, 255, 255, 0.4);
+            font-family: monospace; font-size: 10px; letter-spacing: 0.5em;
+            z-index: 10; pointer-events: none;
+        }
+        .top-left { top: 40px; left: 40px; }
+        .bottom-center { bottom: 40px; left: 50%; transform: translateX(-50%); }
+    </style>
 </head>
 <body>
 
-    <!-- 核心黑科技：用 SVG 生成星球表面的陨石坑与混沌纹理 -->
-    <svg style="display:none;">
-        <filter id="terrain-noise">
-            <feTurbulence type="fractalNoise" baseFrequency="0.015" numOctaves="4" result="noise" />
-            <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.5 0" />
-            <feBlend in="SourceGraphic" in2="noise" mode="multiply" />
-        </filter>
-    </svg>
-
-    <!-- 视觉层 1：深紫色的宇宙与星云雾气 -->
-    <div class="cosmic-sky">
-        <div class="nebula-clouds"></div>
-    </div>
-
-    <!-- 视觉层 2：巨型装置舞台 -->
-    <div class="stage-container">
-        <!-- 顶部的孤独剪影（象征演出者） -->
-        <div class="lonely-figure"></div>
-        <!-- 巨大的暗淡星体 -->
-        <div class="massive-planet">
-            <div class="planet-texture"></div>
-        </div>
-    </div>
-
-    <!-- 视觉层 3：底部观众席微光与边缘冷酷 UI -->
-    <div class="audience-void"></div>
     <div class="ui-text top-left">CASOLAB</div>
-    <div class="ui-text bottom-center">ALONE_IN_THE_UNIVERSE</div>
+    <div class="ui-text bottom-center">SYSTEM_STANDBY</div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <script>
+        // 1. 初始化场景、相机和渲染器
+        const scene = new THREE.Scene();
+        // 增加一点极弱的宇宙紫雾背景色
+        scene.fog = new THREE.FogExp2(0x05000a, 0.001); 
+        
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        // 开启真实的物理阴影贴图
+        renderer.outputEncoding = THREE.sRGBEncoding; 
+        document.body.appendChild(renderer.domElement);
+
+        // 2. 制造真实的深邃星空 (粒子系统)
+        const starGeometry = new THREE.BufferGeometry();
+        const starMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.5, transparent: true, opacity: 0.8 });
+        const starVertices = [];
+        for(let i = 0; i < 4000; i++) {
+            const x = (Math.random() - 0.5) * 1000;
+            const y = (Math.random() - 0.5) * 1000;
+            const z = (Math.random() - 0.5) * 1000;
+            starVertices.push(x, y, z);
+        }
+        starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
+        const stars = new THREE.Points(starGeometry, starMaterial);
+        scene.add(stars);
+
+        // 3. 构建巨型星球
+        // 这里需要一张真实的 4K 行星贴图才能显得“真”。暂时用高精度的月球贴图 URL 替代。
+        const textureLoader = new THREE.TextureLoader();
+        const planetTexture = textureLoader.load('https://s3-us-west-2.amazonaws.com/s.cdpn.io/17271/lroc_color_poles_1k.jpg');
+        
+        const planetGeometry = new THREE.SphereGeometry(30, 64, 64);
+        const planetMaterial = new THREE.MeshStandardMaterial({
+            map: planetTexture,
+            roughness: 0.9,  /* 粗糙的岩石表面 */
+            metalness: 0.1,
+        });
+        const planet = new THREE.Mesh(planetGeometry, planetMaterial);
+        
+        // 把星球放在屏幕下方，营造巨大的压迫感
+        planet.position.set(0, -20, -50); 
+        scene.add(planet);
+
+        // 4. 电影级打光 (这才是真实感的来源)
+        // 主光源：极度锐利的单侧冷白光，模拟恒星照射，制造深邃的阴影
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 1.2);
+        directionalLight.position.set(50, 20, 10);
+        scene.add(directionalLight);
+
+        // 环境补光：极弱的紫光，让背光面不至于完全死黑
+        const ambientLight = new THREE.AmbientLight(0x1a0033, 0.4); 
+        scene.add(ambientLight);
+
+        // 调整相机位置
+        camera.position.z = 10;
+        camera.position.y = 0;
+
+        // 5. 动画循环：让星球以极慢的速度自转，星空缓慢漂移
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // 星球极其缓慢的压迫感自转
+            planet.rotation.y += 0.0005; 
+            
+            // 星空的缓慢位移
+            stars.rotation.y -= 0.0002;
+            stars.rotation.x -= 0.0001;
+
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // 窗口缩放适配
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
 </body>
 </html>
