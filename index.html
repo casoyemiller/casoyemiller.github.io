@@ -2,108 +2,132 @@
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CASOLAB</title>
     <style>
-        /* 抹除所有网页痕迹，将浏览器变成纯粹的画布 */
-        body { margin: 0; overflow: hidden; background-color: #000; }
-        canvas { display: block; }
+        /* 抹除网页痕迹，变身为纯粹的黑色画布 */
+        body { margin: 0; overflow: hidden; background-color: #020204; font-family: monospace; }
         
-        /* 依然保留冷酷的工业化 UI */
-        .ui-text {
-            position: absolute; color: rgba(255, 255, 255, 0.4);
-            font-family: monospace; font-size: 10px; letter-spacing: 0.5em;
-            z-index: 10; pointer-events: none;
+        /* 极度克制的 UI 坐标 */
+        .ui-text { 
+            position: absolute; 
+            color: rgba(255, 255, 255, 0.2); 
+            font-size: 10px; 
+            letter-spacing: 0.6em; 
+            z-index: 10; 
+            pointer-events: none; 
         }
         .top-left { top: 40px; left: 40px; }
         .bottom-center { bottom: 40px; left: 50%; transform: translateX(-50%); }
     </style>
+    
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+      }
+    </script>
 </head>
 <body>
 
     <div class="ui-text top-left">CASOLAB</div>
-    <div class="ui-text bottom-center">SYSTEM_STANDBY</div>
+    <div class="ui-text bottom-center">ALONE_IN_THE_UNIVERSE</div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    
-    <script>
-        // 1. 初始化场景、相机和渲染器
+    <script type="module">
+        import * as THREE from 'three';
+        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+        import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+
+        // 1. 基础空间：无尽的深渊与浓雾
         const scene = new THREE.Scene();
-        // 增加一点极弱的宇宙紫雾背景色
-        scene.fog = new THREE.FogExp2(0x05000a, 0.001); 
-        
-        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        scene.background = new THREE.Color(0x020204); // 80% 的极致黑
+        scene.fog = new THREE.FogExp2(0x0a0514, 0.025); // 幽暗的紫雾
+
+        // 摄像机镜头拉远，强化人的渺小
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+        camera.position.set(0, 2.5, 18); 
+
+        // 开启电影级渲染器
+        const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        // 开启真实的物理阴影贴图
-        renderer.outputEncoding = THREE.sRGBEncoding; 
+        renderer.toneMapping = THREE.ACESFilmicToneMapping; 
         document.body.appendChild(renderer.domElement);
 
-        // 2. 制造真实的深邃星空 (粒子系统)
-        const starGeometry = new THREE.BufferGeometry();
-        const starMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.5, transparent: true, opacity: 0.8 });
-        const starVertices = [];
-        for(let i = 0; i < 4000; i++) {
-            const x = (Math.random() - 0.5) * 1000;
-            const y = (Math.random() - 0.5) * 1000;
-            const z = (Math.random() - 0.5) * 1000;
-            starVertices.push(x, y, z);
-        }
-        starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
-        const stars = new THREE.Points(starGeometry, starMaterial);
-        scene.add(stars);
+        // 2. 神圣感的核心：Bloom (泛光/光晕特效)
+        const renderScene = new RenderPass(scene, camera);
+        const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
+        bloomPass.threshold = 0.05; // 只有被强光打到的边缘才会发光
+        bloomPass.strength = 1.8;  // 光晕的浓度（粉紫色）
+        bloomPass.radius = 1.2;    // 光晕的扩散面积
 
-        // 3. 构建巨型星球
-        // 这里需要一张真实的 4K 行星贴图才能显得“真”。暂时用高精度的月球贴图 URL 替代。
-        const textureLoader = new THREE.TextureLoader();
-        const planetTexture = textureLoader.load('https://s3-us-west-2.amazonaws.com/s.cdpn.io/17271/lroc_color_poles_1k.jpg');
-        
-        const planetGeometry = new THREE.SphereGeometry(30, 64, 64);
-        const planetMaterial = new THREE.MeshStandardMaterial({
-            map: planetTexture,
-            roughness: 0.9,  /* 粗糙的岩石表面 */
-            metalness: 0.1,
+        const composer = new EffectComposer(renderer);
+        composer.addPass(renderScene);
+        composer.addPass(bloomPass);
+
+        // 3. 巨大的原型物体：暗淡星球
+        const planetGeo = new THREE.SphereGeometry(8, 64, 64);
+        const planetMat = new THREE.MeshStandardMaterial({
+            color: 0x050505, // 像湿润黑石头一样的底色
+            roughness: 0.8,
+            metalness: 0.3
         });
-        const planet = new THREE.Mesh(planetGeometry, planetMaterial);
-        
-        // 把星球放在屏幕下方，营造巨大的压迫感
-        planet.position.set(0, -20, -50); 
+        const planet = new THREE.Mesh(planetGeo, planetMat);
+        planet.position.set(0, -6, 0); // 故意让它沉下去，形成巨大的地平线
         scene.add(planet);
 
-        // 4. 电影级打光 (这才是真实感的来源)
-        // 主光源：极度锐利的单侧冷白光，模拟恒星照射，制造深邃的阴影
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 1.2);
-        directionalLight.position.set(50, 20, 10);
-        scene.add(directionalLight);
+        // 4. 画龙点睛的极小主体：孤独的人
+        const personGeo = new THREE.BoxGeometry(0.08, 0.25, 0.08); 
+        const personMat = new THREE.MeshBasicMaterial({ color: 0x000000 }); // 纯黑剪影
+        const person = new THREE.Mesh(personGeo, personMat);
+        person.position.set(0, 2.12, 0); // 站在球体绝对的顶端
+        scene.add(person);
 
-        // 环境补光：极弱的紫光，让背光面不至于完全死黑
-        const ambientLight = new THREE.AmbientLight(0x1a0033, 0.4); 
+        // 5. 情绪打光 (Kanye 式的舞台追光)
+        // 从球体后方打过来的强烈的粉紫逆光，会在球体边缘产生神圣的轮廓光
+        const backLight = new THREE.DirectionalLight(0xC65BFF, 4.0);
+        backLight.position.set(0, 5, -10);
+        scene.add(backLight);
+
+        // 环境底光：非常微弱的深紫，保证球体暗面不会彻底死黑
+        const ambientLight = new THREE.AmbientLight(0x0D0718, 2.0);
         scene.add(ambientLight);
 
-        // 调整相机位置
-        camera.position.z = 10;
-        camera.position.y = 0;
+        // 6. 星空/尘埃粒子
+        const starGeo = new THREE.BufferGeometry();
+        const starMat = new THREE.PointsMaterial({ color: 0x7A4DFF, size: 0.04, transparent: true, opacity: 0.5 });
+        const starPos = [];
+        for(let i=0; i<1500; i++) {
+            // 将粒子散布在巨大的空间中
+            starPos.push((Math.random()-0.5)*100, (Math.random()-0.5)*100, (Math.random()-0.5)*100);
+        }
+        starGeo.setAttribute('position', new THREE.Float32BufferAttribute(starPos, 3));
+        const stars = new THREE.Points(starGeo, starMat);
+        scene.add(stars);
 
-        // 5. 动画循环：让星球以极慢的速度自转，星空缓慢漂移
+        // 7. 时间的流逝：极其缓慢的呼吸感
+        const clock = new THREE.Clock();
         function animate() {
             requestAnimationFrame(animate);
-            
-            // 星球极其缓慢的压迫感自转
-            planet.rotation.y += 0.0005; 
-            
-            // 星空的缓慢位移
-            stars.rotation.y -= 0.0002;
-            stars.rotation.x -= 0.0001;
+            const t = clock.getElapsedTime();
 
-            renderer.render(scene, camera);
+            // 极慢的自转，人几乎察觉不到，但画面是活的
+            planet.rotation.y = t * 0.015;
+            stars.rotation.y = t * 0.005;
+            stars.rotation.x = t * 0.002;
+
+            // 必须用 composer 渲染才能使泛光生效
+            composer.render();
         }
         animate();
 
-        // 窗口缩放适配
+        // 浏览器窗口自适应
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
+            composer.setSize(window.innerWidth, window.innerHeight);
         });
     </script>
 </body>
